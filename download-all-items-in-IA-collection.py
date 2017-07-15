@@ -11,19 +11,28 @@
 # for more detailed info
 import os
 import time
+import argparse
 import internetarchive as ia
 from internetarchive.session import ArchiveSession
 from internetarchive.search import Search
 from internetarchive import download, configure
 
+parser = argparse.ArgumentParser(
+    description='Download internetarchive collection')
+parser.add_argument('collection',metavar='COLL',
+                    help='collection to download')
+parser.add_argument(
+    '-t', '--types', help='filetypes to be downloaded', default=None,
+    choices=['*mobi', '*pdf', '*cbr', '*txt', '*xml', '*epub', '*gz', '*zip', '*torrent'])
+args = parser.parse_args()
 configure()  # interactive login, for automateed scripting use configure('login@email.com', 'password')
 
 s = ArchiveSession()
 
-pattern=None #change this to download only selected filetypes, e.g.: pattern='*mobi' will download only Kindle formatted e-books
-
+pattern = args.types  # change this to download only selected filetypes, e.g.: pattern='*mobi' will download only Kindle formatted e-books
+search_string = 'collection:' + args.collection
 # fill this in -- searches for the ID of a collection in IA
-coll = ia.Search(s, 'collection:xxxxxxxx')
+coll = ia.Search(s, search_string)
 # example of collection page: https://archive.org/details/johnjaycollegeofcriminaljustice
 # the collection ID for that page is johnjaycollegeofcriminaljustice
 # you can tell a page is a collection if it has a 'Spotlight Item' on the left
@@ -33,15 +42,15 @@ num = 0
 for result in coll:  # for all items in a collection
     num = num + 1  # item count
     itemid = result['identifier']
-    print 'Downloading: #' + str(num) + '\t' + itemid
+    print ('Downloading: #' + str(num) + '\t' + itemid)
     try:
-        download(itemid, ignore_existing=True, glob_pattern=pattern)
-        print '\t\t Download success.'
-    except Exception, e:
-        print "Error Occurred downloading () = {}".format(itemid, e)
-    print 'Pausing for 40 minutes'
+        download(itemid, ignore_existing=True,on_the_fly=True,no_directory=True, glob_pattern=pattern)
+        print ('\t\t Download success.')
+    except Exception as e:
+        print ("Error Occurred downloading () = {}".format(itemid, e))
+    print ('Pausing for 40 minutes')
     # IA restricts the number of things you can download. Be nice to
-    time.sleep(2400)
+   # time.sleep(2400)
     # their servers -- limit how much you download, too. For me, this
     # time restriction is still not polite enough, and my connection gets
     # cut off all the dang time.
